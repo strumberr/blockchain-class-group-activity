@@ -9,10 +9,19 @@ RUN pip install wheel
 RUN pip install -r requirements.txt
 
 # Final stage
+# FROM python:3.8-alpine
+# RUN apk add --no-cache libsodium-dev
+# COPY --from=build /usr/local /usr/local
+# COPY src /home/python/src
+# COPY topologies /home/python/topologies
+# WORKDIR /home/python
+# CMD python -u src/run.py $PID $TOPOLOGY $ALGORITHM -docker
+
+
 FROM python:3.8-alpine
 RUN apk add --no-cache libsodium-dev
 COPY --from=build /usr/local /usr/local
 COPY src /home/python/src
 COPY topologies /home/python/topologies
 WORKDIR /home/python
-CMD python -u src/run.py $PID $TOPOLOGY $ALGORITHM -docker
+CMD python -u src/algorithms/stormGarbage/gino/main.py $PID $TOPOLOGY $ALGORITHM -docker
