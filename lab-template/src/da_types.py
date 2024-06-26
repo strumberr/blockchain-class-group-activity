@@ -18,7 +18,7 @@ def message_wrapper(*payloads: type[AnyPayload]) -> Callable[[LazyWrappedHandler
 
 
 class Blockchain(Community):
-    community_id = b"\x05" * 20
+    community_id = b"\x06" * 20
 
     def __init__(self, settings: CommunitySettings) -> None:
         super().__init__(settings)

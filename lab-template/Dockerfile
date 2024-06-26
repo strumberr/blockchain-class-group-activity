@@ -1,15 +1,27 @@
 # Load docker image with Java
-FROM python:3.8-alpine
+FROM python:3.8-alpine AS build
+# Build stage
 RUN apk add --no-cache python3-dev openssl-dev libffi-dev libc-dev gcc libsodium-dev && pip3 install --upgrade pip
-# RUN apk-install python3-dev libffi-dev
-# Copy source files to image
-COPY requirements.txt /home/python/requirements.txt
-# Copy resource files needed for execution
-WORKDIR /home/python
-ENV PIP_ROOT_USER_ACTION=ignore
+COPY requirements.txt /requirements.txt
+WORKDIR /
 RUN pip install --upgrade pip
 RUN pip install wheel
 RUN pip install -r requirements.txt
+
+# Final stage
+# FROM python:3.8-alpine
+# RUN apk add --no-cache libsodium-dev
+# COPY --from=build /usr/local /usr/local
+# COPY src /home/python/src
+# COPY topologies /home/python/topologies
+# WORKDIR /home/python
+# CMD python -u src/run.py $PID $TOPOLOGY $ALGORITHM -docker
+
+
+FROM python:3.8-alpine
+RUN apk add --no-cache libsodium-dev
+COPY --from=build /usr/local /usr/local
 COPY src /home/python/src
 COPY topologies /home/python/topologies
-CMD python -u src/run.py $PID $TOPOLOGY $ALGORITHM -docker
+WORKDIR /home/python
+CMD python -u src/algorithms/stormGarbage/gino/main.py $PID $TOPOLOGY $ALGORITHM -docker

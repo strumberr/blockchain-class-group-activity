@@ -11,9 +11,11 @@ from da_types import Blockchain, message_wrapper
 
 import json
 
+from ipv8.configuration import ConfigBuilder, Strategy, WalkerDefinition, default_bootstrap_defs
+
+
 # We are using a custom dataclass implementation.
 dataclass = overwrite_dataclass(dataclass)
-
 
 @dataclass(
     msg_id=1
@@ -98,6 +100,14 @@ class BlockchainNode(Blockchain):
     def start_validator(self):
         self.register_task("check_txs", self.check_transactions, delay=2, interval=1)
 
+    def stop(self, delay: int = 0):
+
+        async def delayed_stop():
+            print(f"[Node {self.node_id}] Stopping algorithm")
+            self.event.set()
+
+        self.register_anonymous_task('delayed_stop', delayed_stop, delay=delay)
+        
     def check_transactions(self):
         for tx in self.pending_txs:
             if self.balances[tx.sender] - tx.amount >= 0:
