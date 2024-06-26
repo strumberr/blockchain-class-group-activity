@@ -1,4 +1,4 @@
-#!/Users/stormbjorn/Desktop/vsCode/blockchain-class/.venv/bin/python3.12
+#!/Users/stormbjorn/Desktop/vsCode/blockchain-groupwork/lab-template/.venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
