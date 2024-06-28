@@ -7,7 +7,9 @@ from ipv8.community import Community, CommunitySettings
 from ipv8.lazy_community import lazy_wrapper
 from ipv8.types import Peer
 
-from transaction import Transaction, SignedTransaction
+from utils.transaction import MessageBody, SignedMessageBody
+# from utils.transaction import Transaction, SignedTransaction
+
 from block import BlockMessage, Blockchain
 from merkle_tree import MerkleTree
 from hashlib import sha256
@@ -37,7 +39,7 @@ class ValidatorCommunity(Community):
         self.finalized_txs = []
         self.current_block_txs = []
         self.merkle_tree = MerkleTree()
-        self.add_message_handler(SignedTransaction, self.on_transaction)
+        self.add_message_handler(SignedMessageBody, self.on_transaction)
         self.add_message_handler(BlockMessage, self.on_block_message)
         self.miner_address = b64encode(self.my_peer.public_key.key_to_bin()).decode("utf-8")
         
@@ -56,16 +58,16 @@ class ValidatorCommunity(Community):
         self.blockchain = Blockchain(node_id, self.difficulty_target)
         self.blockchain.community = self  # Link to the community
 
-    def serialize_transaction(self, tx: Transaction) -> bytes:
+    def serialize_transaction(self, tx: MessageBody) -> bytes:
         return json.dumps(tx.__dict__, sort_keys=True).encode()
 
-    def deserialize_transaction(self, data: bytes) -> Transaction:
-        return Transaction(**json.loads(data))
+    def deserialize_transaction(self, data: bytes) -> MessageBody:
+        return MessageBody(**json.loads(data))
 
     def node_id_from_peer(self, peer: Peer) -> int:
         return int.from_bytes(peer.public_key.key_to_bin()[:4], byteorder="big")
 
-    def generate_tx_id(self, tx: Transaction):
+    def generate_tx_id(self, tx: MessageBody):
         return hash((tx.sender, tx.receiver, tx.amount, tx.nonce, tx.ts))
 
     def check_transactions(self) -> None:
@@ -100,8 +102,8 @@ class ValidatorCommunity(Community):
     def verify_block_transactions(self, block):
         transactions = json.loads(block.transaction_tx)
         for tx_data in transactions:
-            tx = Transaction(**tx_data['transaction'])
-            signed_tx = SignedTransaction(transaction=tx, signature=tx_data['signature'], public_key=tx_data['public_key'])
+            tx = MessageBody(**tx_data['transaction'])
+            signed_tx = SignedMessageBody(transaction=tx, signature=tx_data['signature'], public_key=tx_data['public_key'])
             if not self.verify_signature(signed_tx, tx):
                 return False
         return True
@@ -123,11 +125,11 @@ class ValidatorCommunity(Community):
 
         print(f"Broadcasted block {block.block_hash} to peers")
 
-    @lazy_wrapper(SignedTransaction)
-    async def on_transaction(self, peer: Peer, payload: SignedTransaction) -> None:
+    @lazy_wrapper(SignedMessageBody)
+    async def on_transaction(self, peer: Peer, payload: SignedMessageBody) -> None:
         """Handle incoming transactions from peers."""
 
-        tx: Transaction = payload.transaction
+        tx: MessageBody = payload.transaction
 
         # Check if the transaction has already been received
         if self.generate_tx_id(tx) in self.saved_txs_hashes:
@@ -188,7 +190,7 @@ class ValidatorCommunity(Community):
         reconstructed_transactions = []
         for tx_data in transactions_list:
             # Recreate the transaction object
-            tx = Transaction(
+            tx = MessageBody(
                 sender=tx_data['sender'],
                 receiver=tx_data['receiver'],
                 amount=tx_data['amount'],

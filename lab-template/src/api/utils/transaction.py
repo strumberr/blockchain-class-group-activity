@@ -6,7 +6,7 @@ from ipv8.messaging.payload_dataclass import overwrite_dataclass
 dataclass = overwrite_dataclass(dataclass)
 
 @dataclass(msg_id=1)  # The value 1 identifies this message and must be unique per community.
-class Transaction:
+class MessageBody:
     """ Represents a basic transaction. """
     sender: str
     receiver: str
@@ -22,8 +22,8 @@ class Transaction:
         self.ts = ts if ts is not None else int(time.time())
 
 @dataclass(msg_id=2)  # The value 2 identifies this message and must be unique per community.
-class SignedTransaction:
+class SignedMessageBody:
     """ Represents a signed transaction including a signature and public key. """
-    transaction: Transaction
+    transaction: MessageBody
     signature: str
     public_key: str

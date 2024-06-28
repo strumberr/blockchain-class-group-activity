@@ -32,3 +32,4 @@ class MerkleTree:
         if self.levels:
             return self.levels[-1][0]
         return None
+
