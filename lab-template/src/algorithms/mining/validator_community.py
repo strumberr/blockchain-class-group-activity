@@ -4,6 +4,7 @@ from base64 import b64encode, b64decode
 from collections import defaultdict
 from hashlib import sha256
 import asyncio
+import os
 
 from ipv8.community import Community, CommunitySettings
 from ipv8.lazy_community import lazy_wrapper
@@ -100,9 +101,8 @@ class ValidatorCommunity(Community):
     def verify_block_transactions(self, block):
         transactions = json.loads(block.transaction_tx)
         for tx_data in transactions:
-            tx = Transaction(**tx_data['transaction'])
-            signed_tx = SignedTransaction(transaction=tx, signature=tx_data['signature'], public_key=tx_data['public_key'])
-            if not self.verify_signature(signed_tx, tx):
+            tx = Transaction(**tx_data)
+            if not self.verify_signature(SignedTransaction(transaction=tx, signature=tx_data['signature'], public_key=tx_data['public_key']), tx):
                 return False
         return True
 
@@ -117,6 +117,9 @@ class ValidatorCommunity(Community):
             block_hash=block.block_hash
         )
         
+        # Remove the block's transactions from the broadcaster's mempool
+        self.remove_transactions_from_mempool(block)
+
         for peer in self.get_peers():
             self.ez_send(peer, block_message)
 
@@ -198,7 +201,37 @@ class ValidatorCommunity(Community):
     def remove_transactions_from_mempool(self, block):
         transactions = json.loads(block.transaction_tx)
         tx_ids_to_remove = {self.generate_tx_id(Transaction(**tx_data)) for tx_data in transactions}
+        removed_txs = [tx for tx in self.mempool if self.generate_tx_id(tx) in tx_ids_to_remove]
         self.mempool = [tx for tx in self.mempool if self.generate_tx_id(tx) not in tx_ids_to_remove]
+
+        print(f"Removed transactions from mempool: {removed_txs}")
+
+    def save_block_to_file(self, block):
+        # Ensure the directory exists
+        directory = "verified_blocks"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # Create the file path
+        filename = f"{directory}/block_{block.timestamp}.json"
+
+        # Convert the block to a dictionary and then to a JSON string
+        block_data = {
+            "timestamp": block.timestamp,
+            "difficulty": block.difficulty,
+            "nonce": block.nonce,
+            "prev_hash": block.prev_hash,
+            "merkle_root": block.merkle_root,
+            "transaction_tx": block.transaction_tx,
+            "block_hash": block.block_hash
+        }
+        block_json = json.dumps(block_data, indent=4)
+
+        # Write the block JSON to the file
+        with open(filename, "w") as file:
+            file.write(block_json)
+
+        print(f"Saved block {block.block_hash} to file {filename}")
 
 
     @lazy_wrapper(BlockMessage)
@@ -246,3 +279,5 @@ class ValidatorCommunity(Community):
         self.blockchain.chain.append(block)
         print(f"Added block {block.block_hash} received from peer {peer}")
 
+        # Save the block to a file
+        self.save_block_to_file(block)
