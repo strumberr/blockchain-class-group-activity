@@ -6,6 +6,7 @@ import time
 import asyncio
 from ipv8.messaging.payload_dataclass import overwrite_dataclass
 from merkle_tree import MerkleTree
+import os
 
 # Custom dataclass implementation
 dataclass = overwrite_dataclass(dataclass)
@@ -69,7 +70,32 @@ class Blockchain:
             tree.add_leaf(tx_string)
         return tree.get_root()
     
- 
+    def save_block_to_file(self, block):
+        # Ensure the directory exists
+        directory = "verified_blocks"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        # Create the file path
+        filename = f"{directory}/genesis_block.json"
+
+        # Convert the block to a dictionary and then to a JSON string
+        block_data = {
+            "timestamp": block.timestamp,
+            "difficulty": block.difficulty,
+            "nonce": block.nonce,
+            "prev_hash": block.prev_hash,
+            "merkle_root": block.merkle_root,
+            "transaction_tx": block.transaction_tx,
+            "block_hash": block.block_hash
+        }
+        block_json = json.dumps(block_data, indent=4)
+
+        # Write the block JSON to the file
+        with open(filename, "w") as file:
+            file.write(block_json)
+
+        print(f"Saved block {block.block_hash} to file {filename}")
         
 
     def create_genesis_block(self):
@@ -98,6 +124,8 @@ class Blockchain:
             block_hash="00006a347b0bd5ee6c51104c4ed936597371ad02a5f9be8db3ea41be1e963462"
         )
         
+        self.save_block_to_file(genesis_block)
+
         # append the genesis block to the chain
         return genesis_block
     
