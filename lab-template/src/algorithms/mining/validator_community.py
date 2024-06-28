@@ -43,7 +43,7 @@ class ValidatorCommunity(Community):
         
         self.mempool = []
         self.node_id = 0
-        self.difficulty_target = 3
+        self.difficulty_target = 6
         self.block_size = 3
         self.active_mining = False
         self.stop_mining_event = asyncio.Event()  # Event to stop mining
@@ -120,6 +120,9 @@ class ValidatorCommunity(Community):
         # Remove the block's transactions from the broadcaster's mempool
         self.remove_transactions_from_mempool(block)
 
+        # Save the block to a file
+        self.save_block_to_file(block_message)
+
         for peer in self.get_peers():
             self.ez_send(peer, block_message)
 
@@ -155,7 +158,7 @@ class ValidatorCommunity(Community):
             self.current_block_txs = self.mempool[:self.block_size]
             
             await self.blockchain.create_new_block(self.current_block_txs)
-
+        
         for peer in self.get_peers():
             self.ez_send(peer, payload)
 
