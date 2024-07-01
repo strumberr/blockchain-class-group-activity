@@ -1,19 +1,18 @@
-import json
 import random
 import time
 from abc import ABC, abstractmethod
-from base64 import b64encode
 from typing import List
 
-from algorithms.mining.transaction import SignedTransaction, Transaction
-from communities.node_types import VALIDATOR_NODE
+from helpers.bcolors import bcolors
+from helpers.crypto import hash
+from helpers.node_types import CLIENT_NODE
+from ipv8.lazy_community import lazy_wrapper
 from ipv8.types import Peer
-
-
-class bcolors:
-    # BLUE
-    SENDTRANSACTION = "\033[94m"
-    ERROR = "\033[91m"
+from messages.peer_message import (
+    PeerMessage,
+    SignedPeerMessage,
+    serialize_peer_message,
+)
 
 
 class ClientCommunity(ABC):
@@ -22,70 +21,97 @@ class ClientCommunity(ABC):
     def __init__(self) -> None:
         self.counter = 1
         self.max_messages = 3
-        # self.overlays = {}
-        # self.add_message_handler(SignedTransaction, self.on_transaction)
+        self.peer_messages_received = {}
+
+        self.add_message_handler(SignedPeerMessage, self.on_peer_message)
 
     async def started(self) -> None:
-        """Start creating transactions periodically."""
-        self.register_task(
-            "create_transaction", self.create_transaction, interval=1.0, delay=1.0
-        )
+        return
 
-    def serialize_transaction(self, tx: Transaction) -> bytes:
-        """Serialize transaction to bytes for storage or transmission."""
-        return json.dumps(tx.__dict__, sort_keys=True).encode()
+    def send_peer_message(self, peer: Peer, message: str):
+        """Generates a message and propagates it to the network."""
 
-    def deserialize_transaction(self, data: bytes) -> Transaction:
-        """Deserialize bytes back into Transaction object."""
-        return Transaction(**json.loads(data))
-
-    def node_id_from_peer(self, peer: Peer) -> int:
-        """Extract node ID from a peer (placeholder implementation)."""
-        return int.from_bytes(peer.public_key.key_to_bin()[:4], byteorder="big")
-
-    def create_transaction(self) -> None:
-        """Create and send a transaction to a randomly chosen peer."""
-        if not self.get_peers():
+        if not self.peers_by_node_type(CLIENT_NODE):
             print(
                 bcolors.ERROR
                 + f"[Node {self.my_peer.mid}] No peers available to send a transaction."
+                + bcolors.RESET
             )
             return
 
-        peer = random.choice(self.peers_by_node_type(VALIDATOR_NODE))
-        self.node_id_from_peer(peer)
+        sender = self.my_peer.mid
+        receiver = peer.mid
 
-        tx = Transaction(
-            sender=b64encode(self.my_peer.public_key.key_to_bin()).decode("utf-8"),
-            receiver=b64encode(peer.public_key.key_to_bin()).decode("utf-8"),
-            amount=random.randint(1, 10),
+        # Encrypt the  // Pending
+
+        peer_message = PeerMessage(
+            sender=sender,
+            receiver=receiver,
+            message=message,
             nonce=self.counter,
-            ts=int(time.time()),
+            timestamp=int(time.time()),
         )
 
-        tx_data = self.serialize_transaction(tx)
-
-        signature = b64encode(
-            self.crypto.create_signature(self.my_peer.key, tx_data)
-        ).decode("utf-8")
-
-        signed_tx = SignedTransaction(
-            tx,
-            signature,
-            b64encode(self.my_peer.public_key.key_to_bin()).decode("utf-8"),
+        miner_peer = random.choice(self.peers_by_node_type(CLIENT_NODE))
+        signed_peer_message = SignedPeerMessage(
+            peer_message,
+            self.crypto.create_signature(
+                self.my_peer.key, serialize_peer_message(peer_message)
+            ),
+            sender,
         )
 
         self.counter += 1
-        # print(
-        #     bcolors.SENDTRANSACTION
-        #     + f"[Node {self.my_peer.mid}] Sending transaction {tx.nonce} to {peer_id}"
-        # )
 
-        self.ez_send(peer, signed_tx)
-
-        if self.counter > self.max_messages:
-            self.cancel_pending_task("create_transaction")
+        self.ez_send(miner_peer, signed_peer_message)
 
     @abstractmethod
     def peers_by_node_type(self, node_type: int) -> List[Peer]:
         pass
+
+    @lazy_wrapper(SignedPeerMessage)
+    def on_peer_message(self, peer: Peer, payload: SignedPeerMessage) -> None:
+        """Handles incoming messages."""
+
+        message = payload.message
+
+        # Check if the transaction has already been received
+        if hash(serialize_peer_message(message)) in self.peer_messages_received:
+            print(bcolors.WARNING + f"Message already received" + bcolors.RESET)
+            return
+
+        self.peer_messages_received[hash(serialize_peer_message(message))] = message
+
+        # # Check the signature of the message
+
+        # try:
+        #     valid_signature = self.crypto.is_valid_signature(
+        #         self.crypto.key_from_public_bin(public_key),
+        #         serialize_peer_message(message),
+        #         signature,
+        #     )
+
+        #     if not valid_signature:
+        #         print(
+        #             f"Invalid signature for message {message.nonce} from {message.sender}"
+        #         )
+        #         return
+        # except Exception as e:
+        #     print(f"Error: {e}")
+        #     return
+
+        # Decrypt the message
+        if message.receiver == self.my_peer.mid:
+
+            # decrypt the message // pending
+            message_decrypted = message.message
+
+            print(
+                bcolors.OK
+                + f"Received message {message.nonce} from {message.sender}: {message_decrypted}"
+                + bcolors.RESET
+            )
+
+        # Propagate the message to the network
+        for peer in self.peers_by_node_type(CLIENT_NODE):
+            self.ez_send(peer, payload)

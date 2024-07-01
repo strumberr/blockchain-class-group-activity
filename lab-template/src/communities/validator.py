@@ -7,7 +7,7 @@ from typing import List
 from algorithms.mining.block import Blockchain
 from algorithms.mining.merkle_tree import MerkleTree
 from algorithms.mining.transaction import SignedTransaction, Transaction
-from communities.node_types import VALIDATOR_NODE
+from helpers.node_types import VALIDATOR_NODE
 from ipv8.lazy_community import lazy_wrapper
 from ipv8.types import Peer
 
@@ -45,11 +45,10 @@ class ValidatorCommunity(ABC):
         self.block_size = 3
         self.active_mining = False
 
-    async def started(self, node_id) -> None:
+    async def started(self) -> None:
         self.register_task(
             "check_transactions", self.check_transactions, interval=1.0, delay=1.0
         )
-        self.node_id = node_id
 
         # initialize Block class
         self.blockchain = Blockchain(node_id, self.difficulty_target)

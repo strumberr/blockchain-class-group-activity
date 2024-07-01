@@ -5,7 +5,7 @@ import json
 import time
 import asyncio
 from ipv8.messaging.payload_dataclass import overwrite_dataclass
-from merkle_tree import MerkleTree
+from .merkle_tree import MerkleTree
 
 # Custom dataclass implementation
 dataclass = overwrite_dataclass(dataclass)
