@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -18,27 +17,28 @@ class BlockMessage:
     nonce: int
     prev_hash: str
     merkle_root: str
-    transaction_tx: str
+    message_tx: str
     block_hash: str
 
 @dataclass
-class Transaction:
-    """ Represents a basic transaction. """
-    sender: str
-    receiver: str
-    amount: int
-    nonce: int = 1
-    ts: int = 0
+class Message:
+    """ Represents a basic message. """
+    sender_public_key: str
+    receiver_public_key: str
+    sender: int
+    receiver: int
+    message: str
+    timestamp: int
 
 @dataclass
-class SignedTransaction:
-    """ Represents a signed transaction including a signature and public key. """
-    transaction: Transaction
+class SignedMessage:
+    """ Represents a signed message including a signature and public key. """
+    message: Message
     signature: str
     public_key: str
 
 class bcolors:
-    ONTRANSACTION = "\033[95m"
+    ONMESSAGE = "\033[95m"
     OKSIGNATURE = "\033[92m"
     BADSIGNATURE = "\033[91m"
 
@@ -57,20 +57,13 @@ class Blockchain:
         self.active_mining = False
         self.community = None  # Will be set by ValidatorCommunity
 
-
-
-    def create_merkle_root(self, transactions):
-        """ Create a Merkle root from a list of signed transactions. """
-        print(f"Transatitionne1: {transactions}")
-
+    def create_merkle_root(self, messages):
+        """ Create a Merkle root from a list of signed messages. """
         tree = MerkleTree()
-        for signed_tx in transactions:
-            tx_string = json.dumps(signed_tx.__dict__, default=lambda o: o.__dict__)
-            tree.add_leaf(tx_string)
+        for signed_msg in messages:
+            msg_string = json.dumps(signed_msg.__dict__, default=lambda o: o.__dict__)
+            tree.add_leaf(msg_string)
         return tree.get_root()
-    
- 
-        
 
     def create_genesis_block(self):
         timestamp = int(time.time())
@@ -78,63 +71,63 @@ class Blockchain:
         nonce = 0
         prev_hash = '0' * 64
         
-        coinbase_tx = SignedTransaction(
-            transaction=Transaction(sender="boss", receiver="0", amount=50, nonce=1, ts=timestamp),
+        coinbase_msg = SignedMessage(
+            message=Message(sender_public_key="boss_public_key", receiver_public_key="0_public_key", sender=0, receiver=50, message="Genesis message", timestamp=timestamp),
             signature="coinbase_signature",
             public_key="coinbase_public_key"
         )
         
-        transactions = [coinbase_tx]
+        messages = [coinbase_msg]
         
-        merkle_root = self.create_merkle_root(transactions)
+        merkle_root = self.create_merkle_root(messages)
         
         genesis_block = BlockMessage(
-            timestamp = timestamp, 
-            difficulty = difficulty, 
-            nonce=75806, 
-            prev_hash = prev_hash, 
-            merkle_root = merkle_root, 
-            transaction_tx=json.dumps(coinbase_tx.__dict__, default=lambda o: o.__dict__),
+            timestamp=timestamp, 
+            difficulty=difficulty, 
+            nonce=nonce, 
+            prev_hash=prev_hash, 
+            merkle_root=merkle_root, 
+            message_tx=json.dumps(coinbase_msg.__dict__, default=lambda o: o.__dict__),
             block_hash="00006a347b0bd5ee6c51104c4ed936597371ad02a5f9be8db3ea41be1e963462"
         )
         
         # append the genesis block to the chain
         return genesis_block
     
-    
-
-    async def create_new_block(self, transactions):
+    async def create_new_block(self, messages):
         timestamp = int(time.time())
         nonce = 0
         prev_hash = self.chain[-1].block_hash
-        merkle_root = self.create_merkle_root(transactions)
+        merkle_root = self.create_merkle_root(messages)
         
-        # Convert transactions to a JSON serializable format
-        transactions_json = [tx.__dict__ for tx in transactions]
+        # Convert messages to a JSON serializable format
+        messages_json = [msg.__dict__ for msg in messages]
 
-        new_block = BlockMessage(timestamp = timestamp, difficulty = self.difficulty_target, nonce=nonce, 
-            prev_hash = prev_hash, 
-            merkle_root = merkle_root, 
-            transaction_tx=json.dumps(transactions_json),
+        new_block = BlockMessage(
+            timestamp=timestamp, 
+            difficulty=self.difficulty_target, 
+            nonce=nonce, 
+            prev_hash=prev_hash, 
+            merkle_root=merkle_root, 
+            message_tx=json.dumps(messages_json),
             block_hash="new_block_hash"
         )
 
         await self.mine_block(new_block)
         return new_block
 
-
-    async def add_block(self, transactions):
-        if len(transactions) % 3 != 0:
-            raise ValueError("The number of transactions must be a multiple of 3.")
+    async def add_block(self, messages):
+        if len(messages) % 3 != 0:
+            raise ValueError("The number of messages must be a multiple of 3.")
         
-        for i in range(0, len(transactions), 3):
-            batch = transactions[i:i+3]
+        for i in range(0, len(messages), 3):
+            batch = messages[i:i+3]
             new_block = await self.create_new_block(batch)
             self.chain.append(new_block)
         return new_block
     
     def compute_hash(self, block, nonce):
-        block_string = f'{block.timestamp}{block.difficulty}{nonce}{block.prev_hash}{block.merkle_root}{block.transaction_tx}'
+        block_string = f'{block.timestamp}{block.difficulty}{nonce}{block.prev_hash}{block.merkle_root}{block.message_tx}'
         return sha256(block_string.encode()).hexdigest()
 
     async def mine_block(self, block):
@@ -142,7 +135,6 @@ class Blockchain:
         
         # Start a timer
         start_time = time.time()
-        start_time2 = time.time()
         hashes_computed = 0
         current_nonce = 0
         
@@ -154,7 +146,7 @@ class Blockchain:
             # Every 2 seconds, print the time elapsed and the number of hashes computed
             if time.time() - start_time > 2:
                 print(f"Hashes computed: {hashes_computed}")
-                print(f"Time elapsed: {time.time() - start_time2:.2f} seconds")
+                print(f"Time elapsed: {time.time() - start_time:.2f} seconds")
                 start_time = time.time()
                 
             hash_result = self.compute_hash(block, current_nonce)
@@ -174,7 +166,7 @@ class Blockchain:
                     {bcolors.OKBLOCK}Nonce: {block.nonce}\n
                     {bcolors.OKBLOCK}Previous Hash: {block.prev_hash}\n
                     {bcolors.OKBLOCK}Merkle Root: {block.merkle_root}\n
-                    {bcolors.OKBLOCK}Transaction Body: {block.transaction_tx}\n
+                    {bcolors.OKBLOCK}Message Body: {block.message_tx}\n
                     {bcolors.OKBLOCK}Hash: {block.block_hash}\n'''
                     f'{bcolors.OKBLOCK}------------------------------------\n'
                 )      

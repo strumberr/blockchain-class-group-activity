@@ -25,16 +25,15 @@ class bcolors:
     WARNING = "\033[93m"
     ERROR = "\033[91m"
 
+
 class ValidatorCommunity(Community):
     community_id = b"harbourspaceuniverse"
 
     def __init__(self, settings: CommunitySettings) -> None:
         super().__init__(settings)
-        self.executed_checks = 0
-        self.balances = defaultdict(lambda: 1000)
-        self.pending_txs = []
+
         self.saved_txs_hashes = {}
-        self.finalized_txs = []
+
         self.current_block_txs = []
         self.merkle_tree = MerkleTree()
         self.add_message_handler(SignedTransaction, self.on_transaction)
@@ -48,7 +47,7 @@ class ValidatorCommunity(Community):
         self.active_mining = False
         
     async def started(self, node_id) -> None:
-        self.register_task("check_transactions", self.check_transactions, interval=1.0, delay=1.0)
+        # self.register_task("check_transactions", self.check_transactions, interval=1.0, delay=1.0)
         self.node_id = node_id
         print(f"Node ID: {self.node_id}")
 
@@ -67,17 +66,6 @@ class ValidatorCommunity(Community):
 
     def generate_tx_id(self, tx: Transaction):
         return hash((tx.sender, tx.receiver, tx.amount, tx.nonce, tx.ts))
-
-    def check_transactions(self) -> None:
-        for tx in self.pending_txs:
-            if self.balances[tx.sender] - tx.amount >= 0:
-                self.balances[tx.sender] -= tx.amount
-                self.balances[tx.receiver] += tx.amount
-                self.pending_txs.remove(tx)
-                self.finalized_txs.append(tx)
-                self.current_block_txs.append(tx)
-                self.merkle_tree.add_leaf(self.serialize_transaction(tx).decode())
-        self.executed_checks += 1
 
     def verify_signature(self, payload, tx):
         # Verify the signature of the transaction
@@ -193,7 +181,8 @@ class ValidatorCommunity(Community):
                 receiver=tx_data['receiver'],
                 amount=tx_data['amount'],
                 nonce=tx_data['nonce'],
-                ts=tx_data['ts']
+                ts=tx_data['ts'],
+                message=tx_data['message']
             )
             
             reconstructed_transactions.append(tx)

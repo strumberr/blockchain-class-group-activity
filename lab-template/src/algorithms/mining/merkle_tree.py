@@ -1,7 +1,7 @@
 from hashlib import sha256
 
 class MerkleTree:
-    """ Implementation of a Merkle Tree for storing transaction hashes. """
+    """ Implementation of a Merkle Tree for storing message hashes. """
 
     def __init__(self):
         self.leaves = []

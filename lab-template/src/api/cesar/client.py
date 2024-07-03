@@ -1,15 +1,13 @@
 import json
 import random
-from base64 import b64encode
-from ipv8.community import Community, CommunitySettings
-from ipv8.lazy_community import lazy_wrapper
-from ipv8.types import Peer
-
-from transaction import Transaction, SignedTransaction
-from validator_community import ValidatorCommunity
-
 import time
-import random
+from abc import ABC, abstractmethod
+from base64 import b64encode
+from typing import List
+
+from algorithms.mining.transaction import SignedTransaction, Transaction
+from node_types import VALIDATOR_NODE
+from ipv8.types import Peer
 
 
 class bcolors:
@@ -18,19 +16,16 @@ class bcolors:
     ERROR = "\033[91m"
 
 
-class MyCommunity(Community):
+class ClientCommunity(ABC):
     """Custom community for handling transactions."""
 
-    community_id = b"harbourspaceuniverse"
-
-    def __init__(self, settings: CommunitySettings) -> None:
-        super().__init__(settings)
+    def __init__(self) -> None:
         self.counter = 1
         self.max_messages = 3
         # self.overlays = {}
         # self.add_message_handler(SignedTransaction, self.on_transaction)
 
-    def started(self) -> None:
+    async def started(self) -> None:
         """Start creating transactions periodically."""
         self.register_task(
             "create_transaction", self.create_transaction, interval=1.0, delay=1.0
@@ -57,8 +52,8 @@ class MyCommunity(Community):
             )
             return
 
-        peer = random.choice(self.get_peers())
-        peer_id = self.node_id_from_peer(peer)
+        peer = random.choice(self.peers_by_node_type(VALIDATOR_NODE))
+        self.node_id_from_peer(peer)
 
         tx = Transaction(
             sender=b64encode(self.my_peer.public_key.key_to_bin()).decode("utf-8"),
@@ -66,7 +61,6 @@ class MyCommunity(Community):
             amount=random.randint(1, 10),
             nonce=self.counter,
             ts=int(time.time()),
-            message="Hello, World!",
         )
 
         tx_data = self.serialize_transaction(tx)
@@ -86,18 +80,12 @@ class MyCommunity(Community):
         #     bcolors.SENDTRANSACTION
         #     + f"[Node {self.my_peer.mid}] Sending transaction {tx.nonce} to {peer_id}"
         # )
+
         self.ez_send(peer, signed_tx)
 
         if self.counter > self.max_messages:
             self.cancel_pending_task("create_transaction")
 
-    # @lazy_wrapper(SignedTransaction)
-    # async def on_transaction(self, peer: Peer, payload: SignedTransaction) -> None:
-    #     """Handle incoming signed transactions."""
-    #     print(
-    #         bcolors.ONTRANSACTION
-    #         + f"Received signed transaction from {str(peer)} in a client community."
-    #     )
-
-    #     for peer in self.get_peers():
-    #         self.ez_send(peer, payload)
+    @abstractmethod
+    def peers_by_node_type(self, node_type: int) -> List[Peer]:
+        pass

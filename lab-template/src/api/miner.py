@@ -1,29 +1,52 @@
 import json
+import random
 import time
 from base64 import b64encode, b64decode
-from collections import defaultdict
-from ipv8.community import Community, CommunitySettings
-from ipv8.lazy_community import lazy_wrapper
-from ipv8.types import Peer
+from typing import List, Dict
+from asyncio import run
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
-from utils.helpers import Message, SignedMessage
+from ipv8.configuration import ConfigBuilder, WalkerDefinition, default_bootstrap_defs, Strategy
+from ipv8.lazy_community import lazy_wrapper
+from ipv8.messaging.serialization import Payload
+from ipv8.peerdiscovery.network import PeerObserver
+from ipv8_service import IPv8
+from ipv8.types import Peer, MessageHandlerFunction
+from ipv8.community import Community, CommunitySettings
+from ipv8.messaging.payload_dataclass import overwrite_dataclass
+from ipv8.util import run_forever
+
+from utils.helpers import (
+    CLIENT_NODE,
+    VALIDATOR_NODE,
+    node_is_node_type,
+    node_type_to_str,
+    bcolors,
+    Message,
+    SignedMessage
+)
+
 from block import BlockMessage, Blockchain
+from collections import defaultdict
 from merkle_tree import MerkleTree
 from hashlib import sha256
 
 import asyncio
+import argparse
 
-class bcolors:
-    ONMESSAGE = "\033[95m"
-    OKSIGNATURE = "\033[92m"
-    BADSIGNATURE = "\033[91m"
 
-    ONBLOCKMESSAGE = "\033[94m"
-    OKBLOCK = "\033[92m"
 
-    WARNING = "\033[93m"
-    ERROR = "\033[91m"
 
+class Message:
+    sender_public_key: str
+    receiver_public_key: str
+    sender: int
+    receiver: int
+    message: str
+    timestamp: int
+    signature: str
+    
 
 class ValidatorCommunity(Community):
     community_id = b"harbourspaceuniverse"
@@ -107,6 +130,8 @@ class ValidatorCommunity(Community):
             self.ez_send(peer, block_message)
 
         print(f"Broadcasted block {block.block_hash} to peers")
+    
+    
 
     @lazy_wrapper(SignedMessage)
     async def on_message(self, peer: Peer, payload: SignedMessage) -> None:
@@ -218,3 +243,51 @@ class ValidatorCommunity(Community):
         # Add the block to the blockchain
         # self.blockchain.chain.append(block)
         # print(f"Added block {block.block_hash} received from peer {peer}")
+
+
+
+
+
+
+
+
+
+
+
+async def start_communities(node_id) -> None:
+    """ Initialize IPv8 and start the communities. """
+    
+    
+    builder = ConfigBuilder().clear_keys().clear_overlays()
+    builder.add_key("my peer", "medium", f"ec1.pem")
+
+    builder.add_overlay("ValidatorCommunity", "my peer",
+                        [WalkerDefinition(Strategy.RandomWalk,
+                                          20, {'timeout': 3.0})],
+                        default_bootstrap_defs, {}, [('started', node_id)])
+    
+    
+    
+    await IPv8(builder.finalize(), extra_communities={'ValidatorCommunity': ValidatorCommunity}).start()
+    await run_forever()
+    
+    
+run(start_communities(1))
+
+
+
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser(
+#         prog="Blockchain",
+#         description="Code to execute blockchain.",
+#         epilog="Designed for A27 Fundamentals and Design of Blockchain-based Systems",
+#     )
+#     parser.add_argument("node_id", type=int)
+#     parser.add_argument("topology", type=str, nargs="?", default="topologies/default.yaml")
+#     parser.add_argument("algorithm", type=str, nargs="?", default='echo')
+#     parser.add_argument("-docker", action='store_true')
+
+#     args = parser.parse_args()
+#     node_id = args.node_id
+        
+#     run(start_communities(node_id))
