@@ -2,8 +2,7 @@ import argparse
 from asyncio import run
 
 from communities.main import BlockchainCommunity
-from helpers.node_types import CLIENT_NODE
-
+from helpers.node_types import CLIENT_NODE, MINER_NODE
 from ipv8.configuration import (
     ConfigBuilder,
     Strategy,
@@ -26,7 +25,7 @@ async def start_communities(node_id) -> None:
         [WalkerDefinition(Strategy.RandomWalk, 20, {"timeout": 3.0})],
         default_bootstrap_defs,
         {},
-        [("started", node_id, CLIENT_NODE)],
+        [("started", node_id, CLIENT_NODE | MINER_NODE)],
     )
 
     await IPv8(
