@@ -43,7 +43,7 @@ class ValidatorCommunity(Community):
         
         self.mempool = []
         self.node_id = 0
-        self.difficulty_target = 6
+        self.difficulty_target = 5
         self.block_size = 3
         self.active_mining = False
         self.stop_mining_event = asyncio.Event()  # Event to stop mining
