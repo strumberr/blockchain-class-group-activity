@@ -191,7 +191,8 @@ class ValidatorCommunity(Community):
                 receiver=tx_data['receiver'],
                 amount=tx_data['amount'],
                 nonce=tx_data['nonce'],
-                ts=tx_data['ts']
+                ts=tx_data['ts'],
+                message=tx_data['message']
             )
             
             reconstructed_transactions.append(tx)

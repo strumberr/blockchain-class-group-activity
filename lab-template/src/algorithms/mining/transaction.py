@@ -11,6 +11,7 @@ class Transaction:
     sender: str
     receiver: str
     amount: int
+    message: str
     nonce: int = 1
     ts: int = 0
 
