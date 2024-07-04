@@ -1,8 +1,8 @@
 import json
-import argparse
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
 from base64 import b64decode
+import datetime
 
 class bcolors:
     ONTRANSACTION = "\033[95m"
@@ -47,14 +47,11 @@ def extract_and_decrypt_messages(file_path, sender_public_key, receiver_private_
         for block in block_data:
             try:
                 transactions = json.loads(block["transaction_tx"])
-                # print(f"Transatitionne1: {transactions}")
             except json.JSONDecodeError as e:
                 print(f"Error decoding JSON in block: {e}")
                 continue
             
-            
             for transaction in transactions:
-                
                 decoded_sender_public_key = b64decode(transaction.get("sender")).decode('utf-8')
 
                 if isinstance(transaction, dict) and decoded_sender_public_key == sender_public_key:
@@ -63,12 +60,19 @@ def extract_and_decrypt_messages(file_path, sender_public_key, receiver_private_
                     except Exception as e:
                         print(f"Error decrypting message in block: {e}")
                         continue
+                    
+                    
 
+                    
                     messages_thread.append({
                         "timestamp": transaction["ts"],
+                        "timestamp_formatted": datetime.datetime.fromtimestamp(transaction["ts"]).strftime('%Y-%m-%d %H:%M:%S'),
                         "sender": transaction["sender"],
                         "receiver": transaction["receiver"],
                         "message": decrypted_message,
+                        "block_hash": block["block_hash"],
+                        "block_merkle_root": block["merkle_root"],
+                        "block_nonce": block["nonce"],
                     })
                     
                 print(f"Decrypted message: {transaction}")
@@ -79,29 +83,19 @@ def extract_and_decrypt_messages(file_path, sender_public_key, receiver_private_
 
     return messages_thread
 
-def main():
-    parser = argparse.ArgumentParser(description="Extract and decrypt messages from a JSON block file for a specific sender public key.")
-    parser.add_argument("file_path", type=str, help="Path to the JSON block file.")
-    parser.add_argument("sender_public_key_file", type=str, help="File containing the sender's public key in PEM format.")
-    parser.add_argument("receiver_private_key_file", type=str, help="File containing the receiver's private key in PEM format.")
-    
-    args = parser.parse_args()
-
-    sender_public_key = load_public_key(args.sender_public_key_file).public_bytes(
+def extract_and_decrypt_messages_from_file(file_path, sender_public_key_file, receiver_private_key_file):
+    sender_public_key = load_public_key(sender_public_key_file).public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     ).decode('utf-8')
-    receiver_private_key = load_private_key(args.receiver_private_key_file)
+    receiver_private_key = load_private_key(receiver_private_key_file)
     
-    messages_thread = extract_and_decrypt_messages(args.file_path, sender_public_key, receiver_private_key)
+    messages_thread = extract_and_decrypt_messages(file_path, sender_public_key, receiver_private_key)
 
-    if messages_thread:
-        for msg in messages_thread:
-            print(bcolors.OKBLOCK + f"Timestamp: {msg['timestamp']}")
-            print(bcolors.OKSIGNATURE + f"Sender: {msg['sender']}")
-            print(bcolors.OKSIGNATURE + f"Receiver: {msg['receiver']}")
-            print(bcolors.OKSIGNATURE + f"Message: {msg['message']}")
-        print(bcolors.OKSIGNATURE + "\n")
+    return json.dumps(messages_thread, indent=4)
 
-if __name__ == "__main__":
-    main()
+# Example usage:
+# if __name__ == "__main__":
+
+#     result = extract_and_decrypt_messages("blocks.json", "sender_public_key.pem", "receiver_private_key.pem")
+#     print(result)
