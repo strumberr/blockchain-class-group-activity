@@ -1,7 +1,7 @@
 from ipv8.configuration import ConfigBuilder, Strategy, WalkerDefinition, default_bootstrap_defs
 from ipv8.util import run_forever
 from ipv8_service import IPv8
-from asyncio import run
+from asyncio import run, sleep
 
 from ipv8.configuration import get_default_configuration
 
@@ -25,6 +25,7 @@ import random
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 
+from da_types import Blockchain
 
 builder = ConfigBuilder().clear_keys().clear_overlays()
 
@@ -66,7 +67,7 @@ class MyCommunity(Community):
     def started(self, sender_private_key, sender_public_key, receiver, amount, message, builder) -> None:
         """Start creating transactions periodically."""
         self.register_task(
-            "create_transaction", self.create_transaction, interval=1.0, delay=1.0
+            "create_transaction", self.create_transaction, interval=1.0, delay=3.0
         )
         self.sender_private_key = sender_private_key
         self.receiver_public_key = receiver
@@ -95,15 +96,17 @@ class MyCommunity(Community):
 
     async def create_transaction(self) -> None:
         """Create and send a transaction to a randomly chosen peer."""
+        
+        print(f"Connected to: {len(self.get_peers())}")
 
-
+        # encrypt message
         tx = Transaction(
             sender=b64encode(self.sender_public_key).decode("utf-8"),
             receiver=b64encode(self.convertToBinary(self.receiver_public_key)).decode("utf-8"),
             amount=self.amount,
             nonce=self.counter,
             ts=int(time.time()),
-            message=encrypt_message(self.message, self.convertToBinary(self.receiver_public_key)).hex()
+            message=self.message
         )
         
         print(f"Transaction: {tx}")
@@ -143,6 +146,8 @@ class MyCommunity(Community):
         #     self.cancel_pending_task("create_transaction")
         
         self.cancel_pending_task("create_transaction")
+        
+        
             
 
 
@@ -159,7 +164,7 @@ async def start_communities(sender_private_key, sender_public_key, receiver, amo
     
     builder.add_overlay("MyCommunity", "my peer",
                         [WalkerDefinition(Strategy.RandomWalk,
-                                          20, {'timeout': 3.0})],
+                                          20, {'timeout': 1.0})],
                         default_bootstrap_defs, {}, [('started', 
                                                       sender_private_key, 
                                                       sender_public_key, 
@@ -167,9 +172,12 @@ async def start_communities(sender_private_key, sender_public_key, receiver, amo
                                                       message,
                                                       builder)])
 
+    ipv8 = IPv8(builder.finalize(), extra_communities={'MyCommunity': MyCommunity})
     
-    await IPv8(builder.finalize(), extra_communities={'MyCommunity': MyCommunity}).start()
-    await run_forever()
+    await ipv8.start()
+    await sleep(10)
+    
+    await ipv8.stop()
 
 
 
