@@ -1,31 +1,42 @@
-import argparse
-from Crypto.PublicKey import RSA
+import os
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
 
-# Function to generate RSA key pair and save to files
-def generate_and_save_key_pair(private_key_file, public_key_file):
-    key = RSA.generate(2048)  # Generate a 2048-bit RSA key pair
-    private_key = key.export_key()
-    public_key = key.publickey().export_key()
-
-    # Save private key to file
-    with open(private_key_file, 'wb') as f:
-        f.write(private_key)
-
-    # Save public key to file
-    with open(public_key_file, 'wb') as f:
-        f.write(public_key)
-
+def generate_rsa_key_pair():
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+    public_key = private_key.public_key()
     return private_key, public_key
 
+def save_keys(private_key, public_key, private_key_file, public_key_file):
+    with open(private_key_file, 'wb') as f:
+        f.write(private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption()
+        ))
+    with open(public_key_file, 'wb') as f:
+        f.write(public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ))
+
+def main():
+    sender_private_key, sender_public_key = generate_rsa_key_pair()
+    receiver_private_key, receiver_public_key = generate_rsa_key_pair()
+
+    save_keys(sender_private_key, sender_public_key, 'sender_private_key.pem', 'sender_public_key.pem')
+    save_keys(receiver_private_key, receiver_public_key, 'receiver_private_key.pem', 'receiver_public_key.pem')
+
+    print("Keys generated and saved to files:")
+
+    print("Sender private key: sender_private_key.pem")
+    print("Sender public key: sender_public_key.pem")
+    print("Receiver private key: receiver_private_key.pem")
+    print("Receiver public key: receiver_public_key.pem")
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate RSA key pair and save to files")
-    parser.add_argument('private_key_file', type=str, help="File to save private key")
-    parser.add_argument('public_key_file', type=str, help="File to save public key")
-    args = parser.parse_args()
+    main()
 
-    # Generate and save keys
-    generate_and_save_key_pair(args.private_key_file, args.public_key_file)
-
-    print(f"RSA key pair generated and saved to files:")
-    print(f"Private key: {args.private_key_file}")
-    print(f"Public key: {args.public_key_file}")
