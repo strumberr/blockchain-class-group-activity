@@ -22,8 +22,9 @@ from ipv8.types import Peer
 from transaction import Transaction, SignedTransaction
 import time 
 import random
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import serialization, hashes
+
 
 builder = ConfigBuilder().clear_keys().clear_overlays()
 
@@ -33,6 +34,16 @@ class bcolors:
     ERROR = "\033[91m"
 
 
+def encrypt_message(message, public_key):
+    encrypted_message = public_key.encrypt(
+        message.encode('utf-8'),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return encrypted_message
 
 class MyCommunity(Community):
     """Custom community for handling transactions."""
@@ -92,7 +103,7 @@ class MyCommunity(Community):
             amount=self.amount,
             nonce=self.counter,
             ts=int(time.time()),
-            message=self.message
+            message=encrypt_message(self.message, self.convertToBinary(self.receiver_public_key)).hex()
         )
         
         print(f"Transaction: {tx}")
