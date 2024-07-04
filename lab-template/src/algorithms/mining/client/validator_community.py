@@ -1,4 +1,3 @@
-
 import json
 import time
 from base64 import b64encode, b64decode
@@ -31,9 +30,11 @@ class ValidatorCommunity(Community):
 
     def __init__(self, settings: CommunitySettings) -> None:
         super().__init__(settings)
-
+        self.executed_checks = 0
+        self.balances = defaultdict(lambda: 1000)
+        self.pending_txs = []
         self.saved_txs_hashes = {}
-
+        self.finalized_txs = []
         self.current_block_txs = []
         self.merkle_tree = MerkleTree()
         self.add_message_handler(SignedTransaction, self.on_transaction)

@@ -1,0 +1,9 @@
+{
+    "timestamp": 1719986185,
+    "difficulty": 3,
+    "nonce": 75806,
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "merkle_root": "8aa88b2459f125ad8bd9bb9805a9d73cb684c5a1a98815f61b6960b089cf34db",
+    "transaction_tx": "{\"transaction\": {\"sender\": \"boss\", \"receiver\": \"0\", \"amount\": 50, \"nonce\": 1, \"ts\": 1719986185}, \"signature\": \"coinbase_signature\", \"public_key\": \"coinbase_public_key\"}",
+    "block_hash": "00006a347b0bd5ee6c51104c4ed936597371ad02a5f9be8db3ea41be1e963462"
+}

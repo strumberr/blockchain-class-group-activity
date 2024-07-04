@@ -1,0 +1,9 @@
+{
+    "timestamp": 1719980733,
+    "difficulty": 4,
+    "nonce": 34509,
+    "prev_hash": "00006a347b0bd5ee6c51104c4ed936597371ad02a5f9be8db3ea41be1e963462",
+    "merkle_root": "a8035ca2df8ce48d51c24de42aa43df84bb8737ca4787aa961b261cdc19f88bc",
+    "transaction_tx": "[{\"sender\": \"MH4wEAYHKoZIzj0CAQYFK4EEACQDagAEACuGMfB9oJFtuwsRBT0RswNvwLXVJghU28sYY9PHuyrrzEWvy1lNAcqcuw5w8Pv27Ls23ACAQ1tGLY23m0pWRm/4grHbvigNU7sEkVUaNrLs/dq8R0+Lz1FV2XbejsSQB+lU3bnAQqY=\", \"receiver\": \"MH4wEAYHKoZIzj0CAQYFK4EEACQDagAEAGhwj5T/nJJSQD6UpbS1d+Tpzu8qLWfyAYo9C9vXL1sXBdSzi7WgkGIjyZ8tGO8n/gP5FADmVLUclo92GPSeLaWdjmP8GaZoWxaaQ7zM7WYkjLH6dmbE6KdACssWxW6z36/XevO/icE=\", \"amount\": 4, \"message\": \"Hello, World!\", \"nonce\": 1, \"ts\": 1719980732}, {\"sender\": \"MH4wEAYHKoZIzj0CAQYFK4EEACQDagAEAGhwj5T/nJJSQD6UpbS1d+Tpzu8qLWfyAYo9C9vXL1sXBdSzi7WgkGIjyZ8tGO8n/gP5FADmVLUclo92GPSeLaWdjmP8GaZoWxaaQ7zM7WYkjLH6dmbE6KdACssWxW6z36/XevO/icE=\", \"receiver\": \"MH4wEAYHKoZIzj0CAQYFK4EEACQDagAEACuGMfB9oJFtuwsRBT0RswNvwLXVJghU28sYY9PHuyrrzEWvy1lNAcqcuw5w8Pv27Ls23ACAQ1tGLY23m0pWRm/4grHbvigNU7sEkVUaNrLs/dq8R0+Lz1FV2XbejsSQB+lU3bnAQqY=\", \"amount\": 5, \"message\": \"Hello, World!\", \"nonce\": 1, \"ts\": 1719980733}, {\"sender\": \"MH4wEAYHKoZIzj0CAQYFK4EEACQDagAEACuGMfB9oJFtuwsRBT0RswNvwLXVJghU28sYY9PHuyrrzEWvy1lNAcqcuw5w8Pv27Ls23ACAQ1tGLY23m0pWRm/4grHbvigNU7sEkVUaNrLs/dq8R0+Lz1FV2XbejsSQB+lU3bnAQqY=\", \"receiver\": \"MH4wEAYHKoZIzj0CAQYFK4EEACQDagAEAGhwj5T/nJJSQD6UpbS1d+Tpzu8qLWfyAYo9C9vXL1sXBdSzi7WgkGIjyZ8tGO8n/gP5FADmVLUclo92GPSeLaWdjmP8GaZoWxaaQ7zM7WYkjLH6dmbE6KdACssWxW6z36/XevO/icE=\", \"amount\": 3, \"message\": \"Hello, World!\", \"nonce\": 2, \"ts\": 1719980733}]",
+    "block_hash": "0000cc1b7ddeb26340b8f0cbbfd2722d7ec29845b59af67003eda5bb4e6bc021"
+}
