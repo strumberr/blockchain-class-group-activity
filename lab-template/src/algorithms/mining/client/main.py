@@ -131,35 +131,66 @@ async def start_communities(sender_private_key, sender_public_key, receiver, amo
     await sleep(5)
     await ipv8.stop()
 
-sender_private_key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048
-)
-sender_unencrypted_pem_private_key = sender_private_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
-)
-sender_pem_public_key = sender_private_key.public_key().public_bytes(
-  encoding=serialization.Encoding.PEM,
-  format=serialization.PublicFormat.SubjectPublicKeyInfo
-)
+# sender_private_key = rsa.generate_private_key(
+#     public_exponent=65537,
+#     key_size=2048
+# )
+# sender_unencrypted_pem_private_key = sender_private_key.private_bytes(
+#     encoding=serialization.Encoding.PEM,
+#     format=serialization.PrivateFormat.TraditionalOpenSSL,
+#     encryption_algorithm=serialization.NoEncryption()
+# )
+# sender_pem_public_key = sender_private_key.public_key().public_bytes(
+#   encoding=serialization.Encoding.PEM,
+#   format=serialization.PublicFormat.SubjectPublicKeyInfo
+# )
 
-receiver_private_key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048
-)
-receiver_unencrypted_pem_private_key = receiver_private_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.TraditionalOpenSSL,
-    encryption_algorithm=serialization.NoEncryption()
-)
+# save the keys to a file
+# with open("sender_private_key.pem", "wb") as f:
+#     f.write(sender_unencrypted_pem_private_key)
+    
+# with open("sender_public_key.pem", "wb") as f:
+#     f.write(sender_pem_public_key)
+    
 
-receiver_pem_public_key = receiver_private_key.public_key().public_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PublicFormat.SubjectPublicKeyInfo
-)
+# receiver_private_key = rsa.generate_private_key(
+#     public_exponent=65537,
+#     key_size=2048
+# )
+# receiver_unencrypted_pem_private_key = receiver_private_key.private_bytes(
+#     encoding=serialization.Encoding.PEM,
+#     format=serialization.PrivateFormat.TraditionalOpenSSL,
+#     encryption_algorithm=serialization.NoEncryption()
+# )
 
+# receiver_pem_public_key = receiver_private_key.public_key().public_bytes(
+#     encoding=serialization.Encoding.PEM,
+#     format=serialization.PublicFormat.SubjectPublicKeyInfo
+# )
+
+
+# save the keys to a file
+# with open("receiver_private_key.pem", "wb") as f:
+#     f.write(receiver_unencrypted_pem_private_key)
+    
+# with open("receiver_public_key.pem", "wb") as f:
+#     f.write(receiver_pem_public_key)
+    
+
+
+# use the keys from the files
+with open("sender_private_key.pem", "rb") as f:
+    sender_unencrypted_pem_private_key = f.read()
+    
+with open("sender_public_key.pem", "rb") as f:
+    sender_pem_public_key = f.read()
+    
+with open("receiver_private_key.pem", "rb") as f:
+    receiver_unencrypted_pem_private_key = f.read()
+    
+with open("receiver_public_key.pem", "rb") as f:
+    receiver_pem_public_key = f.read()
+    
 
 
 # print all the keys
@@ -171,11 +202,11 @@ print(f"Receiver Public Key: {receiver_pem_public_key}")
 
 sender_private_key = sender_unencrypted_pem_private_key
 sender_public_key = sender_pem_public_key
-
-
-
 receiver_public_key = receiver_pem_public_key
+
+
 amount = 10
 message = "Boogers"
 
-run(start_communities(sender_private_key, sender_public_key, receiver_public_key, amount, message))
+for el in range(3):
+    run(start_communities(sender_private_key, sender_public_key, receiver_public_key, amount, message))
