@@ -17,10 +17,12 @@ async def start_communities(node_id) -> None:
     
     builder = ConfigBuilder().clear_keys().clear_overlays()
     builder.add_key("my peer", "medium", f"ec1.pem")
+    
     builder.add_overlay("MyCommunity", "my peer",
                         [WalkerDefinition(Strategy.RandomWalk,
                                           20, {'timeout': 3.0})],
                         default_bootstrap_defs, {}, [('started',)])
+    
     builder.add_overlay("ValidatorCommunity", "my peer",
                         [WalkerDefinition(Strategy.RandomWalk,
                                           20, {'timeout': 3.0})],
