@@ -267,7 +267,11 @@
 
             const container = document.getElementById('messages-container');
             container.innerHTML = '';
-            messages2.filter(msg => msg.sender === sender).forEach(msg => {
+
+            // Sort messages by timestamp in descending order (newest first)
+            const sortedMessages = messages2.filter(msg => msg.sender === sender).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            sortedMessages.forEach(msg => {
                 const messageCard = document.createElement('div');
                 messageCard.className = 'message-card';
                 

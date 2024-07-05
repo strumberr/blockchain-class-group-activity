@@ -115,7 +115,7 @@ async def start_communities() -> None:
     ipv8 = IPv8(builder.finalize(), extra_communities={'MyCommunity': MyCommunity})
 
     await ipv8.start()
-    await sleep(10)
+    await sleep(5)
 
     # Manually call the retrieve_blocks_from_all_peers method
     # community = ipv8.overlays[MyCommunity.community_id][0]

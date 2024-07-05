@@ -52,10 +52,10 @@ def send():
 @app.route('/my-messages', methods=['GET'])
 def messages():
    
-    # from get_blocks import start_communities
+    from get_blocks import start_communities
     
     # run start_communities asynchronusly
-    # result_community = asyncio.run(start_communities())
+    result_community = asyncio.run(start_communities())
     
     
     with open("sender_public_key.pem", "rb") as file:
