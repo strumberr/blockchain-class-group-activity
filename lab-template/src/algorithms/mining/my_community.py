@@ -66,6 +66,7 @@ class MyCommunity(Community):
             amount=random.randint(1, 10),
             nonce=self.counter,
             ts=int(time.time()),
+            message="Hello, World!",
         )
 
         tx_data = self.serialize_transaction(tx)
